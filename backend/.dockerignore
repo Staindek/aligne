@@ -1,0 +1,37 @@
+# Lo que NO se manda al build context.
+# Resultado: builds más rápidos + cero leak accidental.
+
+# Dependencies (se instalan dentro del container)
+node_modules
+
+# Build artifacts del host
+dist
+build
+
+# Secretos — NUNCA al container
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+
+# Docker config (se referencia desde afuera)
+Dockerfile
+.dockerignore
+docker-compose*.yml

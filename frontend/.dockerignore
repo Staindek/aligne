@@ -1,0 +1,45 @@
+# Lo que NO se manda al build context.
+
+# Dependencies
+node_modules
+
+# Build artifacts (se regeneran adentro del container)
+.next
+out
+build
+dist
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Logs / debug
+*.log
+npm-debug.log*
+
+# Editors / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs / AI agent rules
+README.md
+AGENTS.md
+CLAUDE.md
+
+# Docker config
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Misc
+.vercel
+*.tsbuildinfo
+next-env.d.ts

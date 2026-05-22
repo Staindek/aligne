@@ -1,4 +1,16 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1'
+// Dos URLs distintas para el mismo backend:
+//   - Server-side (Server Components, Server Actions): hablamos directo con el
+//     contenedor del backend vía red Docker. INTERNAL_API_URL = http://backend:3000/api/v1
+//   - Client-side (browser): el browser está afuera del cluster Docker, ve el
+//     backend solo a través del puerto mapeado al host. NEXT_PUBLIC_API_URL.
+//
+// Si corrés todo fuera de Docker (npm run dev), ambas variables apuntan a
+// localhost:3000 y todo funciona igual. La distinción solo importa cuando el
+// frontend vive dentro de un contenedor.
+const BASE =
+  typeof window === 'undefined'
+    ? process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1'
+    : process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1'
 
 async function request<T>(
   path: string,

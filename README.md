@@ -26,14 +26,32 @@ A booking platform for a boutique Pilates studio. Students reserve classes from 
 
 ## Run locally
 
-Prerequisites: Node 20+, Docker, npm.
+### With Docker (recommended — one command)
+
+Prerequisites: Docker 24+.
 
 ```bash
-# 1. Start PostgreSQL
-cd backend
-docker compose up -d
+docker compose up --build
+```
+
+That brings up PostgreSQL, the NestJS API and the Next.js frontend on the same network. First build takes ~2 minutes; subsequent runs reuse the layer cache.
+
+- Frontend: <http://localhost:3001>
+- API: <http://localhost:3000/api/v1>
+- DB: `postgres://postgres:postgres@localhost:5432/pilates_db`
+
+Tear down (keeping data): `docker compose down`. Tear down (wiping the volume): `docker compose down -v`.
+
+### Without Docker (faster HMR for frontend work)
+
+Prerequisites: Node 20+, Docker (for the DB), npm.
+
+```bash
+# 1. PostgreSQL via Docker
+docker compose up -d db
 
 # 2. Backend (NestJS, port 3000)
+cd backend
 cp .env.example .env
 npm install
 npm run start:dev
@@ -43,8 +61,6 @@ cd ../frontend
 npm install
 npm run dev
 ```
-
-Frontend: <http://localhost:3001> · API: <http://localhost:3000>
 
 ## Notable design decisions
 

@@ -1,0 +1,89 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stack completo: PostgreSQL + Backend (NestJS) + Frontend (Next.js).
+# Un solo comando para todo:
+#
+#     docker compose up --build
+#
+# Compose crea automáticamente una red bridge donde los servicios se ven entre
+# sí por nombre. El backend habla con la db en `db:5432`; el frontend (server
+# side) habla con el backend en `backend:3000`. El browser usa los puertos
+# mapeados al host (localhost:3001, localhost:3000, localhost:5432).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pilates_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pilates_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume nombrado: los datos sobreviven a `docker compose down`.
+      # Para borrarlos: `docker compose down -v`.
+      - postgres_data:/var/lib/postgresql/data
+    # Healthcheck: Compose espera a que pg esté listo antes de arrancar
+    # los servicios que dependen de él.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pilates_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    container_name: pilates_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # Override del NODE_ENV del Dockerfile (que es 'production').
+      # Lo bajamos a 'development' para que TypeORM corra synchronize:true
+      # y autocree el schema desde las entidades. Esto es una decisión
+      # CONSCIENTE para dev local — en prod real usamos TypeORM migrations
+      # (pendiente Fase 4), nunca synchronize.
+      NODE_ENV: development
+      PORT: 3000
+      # Apunta a la db por NOMBRE DE SERVICIO, no localhost.
+      # Docker resuelve `db` al IP interno del contenedor de Postgres.
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: pilates_db
+      JWT_SECRET: change_this_in_production
+      JWT_EXPIRES_IN: 7d
+    ports:
+      - "3000:3000"
+    depends_on:
+      # service_healthy en lugar de service_started: esperamos a que el
+      # healthcheck de la db pase, no solo a que el container arranque.
+      # Sin esto, el backend puede intentar conectarse antes de que pg
+      # acepte conexiones y morir.
+      db:
+        condition: service_healthy
+
+  frontend:
+    container_name: pilates_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* se hornean en build time. Acá decimos qué URL ve
+        # el browser cuando hace fetch. Si esto cambia, hay que rebuildear.
+        NEXT_PUBLIC_API_URL: http://localhost:3000/api/v1
+    restart: unless-stopped
+    environment:
+      # Esta sí se lee en runtime — la usa el frontend desde Server Components
+      # para hablarle al backend por la red Docker interna.
+      INTERNAL_API_URL: http://backend:3000/api/v1
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

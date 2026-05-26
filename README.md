@@ -2,6 +2,8 @@
   <b>🇬🇧 English</b> · <a href="./README.es.md">🇪🇸 Español</a>
 </p>
 
+[![CI](https://github.com/Staindek/aligne/actions/workflows/ci.yml/badge.svg)](https://github.com/Staindek/aligne/actions/workflows/ci.yml)
+
 # Aligné — Pilates Studio Booking
 
 A booking platform for a boutique Pilates studio. Students reserve classes from packs, instructors manage attendance, and admins run the schedule. Built end-to-end by a single developer.
@@ -74,8 +76,8 @@ npm run dev
 Built as a DevOps portfolio piece alongside being a real product. Each phase is independently shippable.
 
 - [x] **Phase 0** — Public repo, `.gitignore`, README, branch protection
-- [ ] **Phase 1** — Dockerfile (multi-stage) + full `docker compose` (app + DB)
-- [ ] **Phase 2** — CI on PRs (lint + test + build), required status checks before merge to `main`
+- [x] **Phase 1** — Dockerfile (multi-stage) + full `docker compose` (app + DB)
+- [x] **Phase 2** — CI on PRs (lint + test + build), required status checks before merge to `main`
 - [ ] **Phase 3** — Terraform IaC (ECR, RDS, ECS Fargate, ALB, secrets), remote state in S3 + DynamoDB lock
 - [ ] **Phase 4** — Deploy on AWS (ECS Fargate, HTTPS via ACM + CloudFront/Route 53)
 - [ ] **Phase 5** — Observability (CloudWatch + Grafana dashboards, alerting)

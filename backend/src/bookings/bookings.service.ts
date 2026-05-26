@@ -11,7 +11,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { Booking, BookingStatus, AttendanceStatus } from './entities/booking.entity';
+import {
+  Booking,
+  BookingStatus,
+  AttendanceStatus,
+} from './entities/booking.entity';
 import { Schedule } from '../schedules/entities/schedule.entity';
 import { SchedulesService } from '../schedules/schedules.service';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -21,8 +25,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { hasTimeConflict } from './booking-overlap.helper';
 
-const CONFIRMATION_HOURS = 1;       // horas para confirmar después de ser promovida
-const WAITLIST_MIN_HOURS = 3;       // no promover lista de espera si faltan menos de N hs
+const CONFIRMATION_HOURS = 1; // horas para confirmar después de ser promovida
+const WAITLIST_MIN_HOURS = 3; // no promover lista de espera si faltan menos de N hs
 const NO_SHOW_WARNING_THRESHOLD = 3; // disparar aviso al llegar a N faltas en el mes
 
 @Injectable()
@@ -55,7 +59,9 @@ export class BookingsService {
     const start = this.getScheduleStart(schedule);
     const diffHours = (start.getTime() - Date.now()) / 36e5;
     if (diffHours < 4)
-      throw new BadRequestException('No se puede cancelar con menos de 4 horas de anticipación');
+      throw new BadRequestException(
+        'No se puede cancelar con menos de 4 horas de anticipación',
+      );
   }
 
   private currentMonth(): string {
@@ -75,7 +81,10 @@ export class BookingsService {
     return { start, end };
   }
 
-  private async countMonthBookings(userId: string, month: string): Promise<number> {
+  private async countMonthBookings(
+    userId: string,
+    month: string,
+  ): Promise<number> {
     const { start, end } = this.monthRange(month);
     return this.bookingsRepository
       .createQueryBuilder('b')
@@ -91,7 +100,8 @@ export class BookingsService {
   async create(dto: CreateBookingDto, user: User): Promise<Booking> {
     const schedule = await this.schedulesService.findOne(dto.scheduleId);
 
-    if (schedule.isCancelled) throw new BadRequestException('La sesión está cancelada');
+    if (schedule.isCancelled)
+      throw new BadRequestException('La sesión está cancelada');
     this.assertBookingDeadline(schedule);
 
     // Validar nivel: si la clase tiene nivel específico, la alumna tiene que tenerlo
@@ -126,7 +136,12 @@ export class BookingsService {
     if (cap !== null && cap > 0) {
       const monthCount = await this.countMonthBookings(user.id, sessionMonth);
       if (monthCount >= cap) {
-        void this.notifications.fifthClassWarning(user.id, user.email, user.firstName, sessionMonth);
+        void this.notifications.fifthClassWarning(
+          user.id,
+          user.email,
+          user.firstName,
+          sessionMonth,
+        );
         throw new BadRequestException(
           hasPaid
             ? `Alcanzaste el límite de ${cap} clases de tu pack para este mes.`
@@ -143,7 +158,8 @@ export class BookingsService {
         status: BookingStatus.CONFIRMED,
       },
     });
-    if (existing) throw new ConflictException('Ya tenés una reserva en esta sesión');
+    if (existing)
+      throw new ConflictException('Ya tenés una reserva en esta sesión');
 
     // Sin dos clases en el mismo horario (consecutivas sí: 10-11 y 11-12 ok)
     const conflict = await hasTimeConflict(
@@ -166,9 +182,16 @@ export class BookingsService {
     const saved = await this.bookingsRepository.save(booking);
 
     if (!isFull) {
-      await this.schedulesRepository.increment({ id: schedule.id }, 'enrolledCount', 1);
+      await this.schedulesRepository.increment(
+        { id: schedule.id },
+        'enrolledCount',
+        1,
+      );
       // alguien volvió a anotarse → cancelar la cuenta atrás de auto-cancel
-      await this.schedulesRepository.update({ id: schedule.id }, { emptyAt: null });
+      await this.schedulesRepository.update(
+        { id: schedule.id },
+        { emptyAt: null },
+      );
     }
 
     return saved;
@@ -181,7 +204,11 @@ export class BookingsService {
     });
   }
 
-  async findMyBookingsWithWaitlistPosition(userId: string): Promise<(Booking & { waitlistPosition?: number; waitlistTotal?: number })[]> {
+  async findMyBookingsWithWaitlistPosition(
+    userId: string,
+  ): Promise<
+    (Booking & { waitlistPosition?: number; waitlistTotal?: number })[]
+  > {
     const bookings = await this.findMyBookings(userId);
 
     const result = await Promise.all(
@@ -191,7 +218,10 @@ export class BookingsService {
           this.getWaitlistPosition(b.id, b.schedule.id),
           this.getWaitlistTotal(b.schedule.id),
         ]);
-        return Object.assign(b, { waitlistPosition: position, waitlistTotal: total });
+        return Object.assign(b, {
+          waitlistPosition: position,
+          waitlistTotal: total,
+        });
       }),
     );
 
@@ -205,7 +235,9 @@ export class BookingsService {
     });
   }
 
-  async findBySchedules(scheduleIds: string[]): Promise<Record<string, Booking[]>> {
+  async findBySchedules(
+    scheduleIds: string[],
+  ): Promise<Record<string, Booking[]>> {
     const grouped: Record<string, Booking[]> = Object.fromEntries(
       scheduleIds.map((id) => [id, []]),
     );
@@ -238,7 +270,11 @@ export class BookingsService {
     const saved = await this.bookingsRepository.save(booking);
 
     if (wasConfirmed) {
-      await this.schedulesRepository.decrement({ id: booking.schedule.id }, 'enrolledCount', 1);
+      await this.schedulesRepository.decrement(
+        { id: booking.schedule.id },
+        'enrolledCount',
+        1,
+      );
       const waitlistTotal = await this.getWaitlistTotal(booking.schedule.id);
       if (waitlistTotal > 0) {
         await this.promoteFromWaitlist(booking.schedule);
@@ -273,15 +309,17 @@ export class BookingsService {
     });
     const blocked = new Set(
       existing
-        .filter((b) =>
-          b.status === BookingStatus.CONFIRMED ||
-          b.status === BookingStatus.PENDING_CONFIRMATION ||
-          b.status === BookingStatus.WAITLIST,
+        .filter(
+          (b) =>
+            b.status === BookingStatus.CONFIRMED ||
+            b.status === BookingStatus.PENDING_CONFIRMATION ||
+            b.status === BookingStatus.WAITLIST,
         )
         .map((b) => b.user?.id),
     );
 
-    const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
+    const appUrl =
+      this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
     const bookUrl = `${appUrl}/student/classes`;
     const className = schedule.pilatesClass?.name ?? 'clase';
     const time = schedule.startTime.substring(0, 5);
@@ -302,19 +340,33 @@ export class BookingsService {
 
   async confirmWaitlistPromotion(id: string, userId: string): Promise<Booking> {
     const booking = await this.bookingsRepository.findOne({
-      where: { id, user: { id: userId }, status: BookingStatus.PENDING_CONFIRMATION },
+      where: {
+        id,
+        user: { id: userId },
+        status: BookingStatus.PENDING_CONFIRMATION,
+      },
       relations: ['schedule'],
     });
-    if (!booking) throw new NotFoundException('No hay confirmación pendiente para esta reserva');
+    if (!booking)
+      throw new NotFoundException(
+        'No hay confirmación pendiente para esta reserva',
+      );
 
-    if (booking.confirmationDeadline && booking.confirmationDeadline < new Date()) {
+    if (
+      booking.confirmationDeadline &&
+      booking.confirmationDeadline < new Date()
+    ) {
       throw new BadRequestException('El tiempo para confirmar venció');
     }
 
     booking.status = BookingStatus.CONFIRMED;
     booking.confirmationDeadline = null as unknown as Date;
     const saved = await this.bookingsRepository.save(booking);
-    await this.schedulesRepository.increment({ id: booking.schedule.id }, 'enrolledCount', 1);
+    await this.schedulesRepository.increment(
+      { id: booking.schedule.id },
+      'enrolledCount',
+      1,
+    );
     await this.schedulesRepository.update(
       { id: booking.schedule.id },
       { emptyAt: null },
@@ -322,7 +374,10 @@ export class BookingsService {
     return saved;
   }
 
-  async getWaitlistPosition(bookingId: string, scheduleId: string): Promise<number> {
+  async getWaitlistPosition(
+    bookingId: string,
+    scheduleId: string,
+  ): Promise<number> {
     const earlier = await this.bookingsRepository
       .createQueryBuilder('b')
       .where('b.schedule.id = :scheduleId', { scheduleId })
@@ -342,7 +397,10 @@ export class BookingsService {
     });
   }
 
-  async getMonthlyClassCountForUser(userId: string, month?: string): Promise<number> {
+  async getMonthlyClassCountForUser(
+    userId: string,
+    month?: string,
+  ): Promise<number> {
     return this.countMonthBookings(userId, month ?? this.currentMonth());
   }
 
@@ -353,7 +411,9 @@ export class BookingsService {
       .createQueryBuilder('b')
       .innerJoin('b.schedule', 's')
       .where('b.user.id = :userId', { userId })
-      .andWhere('b.attendanceStatus = :status', { status: AttendanceStatus.ABSENT })
+      .andWhere('b.attendanceStatus = :status', {
+        status: AttendanceStatus.ABSENT,
+      })
       .andWhere('s.date >= :start AND s.date < :end', { start, end })
       .getCount();
   }
@@ -372,15 +432,19 @@ export class BookingsService {
     if (!next) return;
 
     // Calcular deadline de confirmación: 1 hora desde ahora, pero no más allá de (clase - 3hs)
-    const confirmationLimit = new Date(scheduleStart.getTime() - WAITLIST_MIN_HOURS * 36e5);
+    const confirmationLimit = new Date(
+      scheduleStart.getTime() - WAITLIST_MIN_HOURS * 36e5,
+    );
     const oneHourFromNow = new Date(Date.now() + CONFIRMATION_HOURS * 36e5);
-    const deadline = oneHourFromNow < confirmationLimit ? oneHourFromNow : confirmationLimit;
+    const deadline =
+      oneHourFromNow < confirmationLimit ? oneHourFromNow : confirmationLimit;
 
     next.status = BookingStatus.PENDING_CONFIRMATION;
     next.confirmationDeadline = deadline;
     await this.bookingsRepository.save(next);
 
-    const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
+    const appUrl =
+      this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
     const confirmUrl = `${appUrl}/student/bookings`;
 
     void this.notifications.waitlistPromotion(
@@ -402,7 +466,9 @@ export class BookingsService {
       .createQueryBuilder('b')
       .innerJoinAndSelect('b.schedule', 's')
       .innerJoinAndSelect('b.user', 'u')
-      .where('b.status = :status', { status: BookingStatus.PENDING_CONFIRMATION })
+      .where('b.status = :status', {
+        status: BookingStatus.PENDING_CONFIRMATION,
+      })
       .andWhere('b.confirmationDeadline < :now', { now: new Date() })
       .getMany();
 

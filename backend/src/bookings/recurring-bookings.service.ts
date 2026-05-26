@@ -59,7 +59,10 @@ export class RecurringBookingsService {
     return { start, end };
   }
 
-  private async countMonthBookings(userId: string, month: string): Promise<number> {
+  private async countMonthBookings(
+    userId: string,
+    month: string,
+  ): Promise<number> {
     const { start, end } = this.monthRange(month);
     return this.bookingsRepo
       .createQueryBuilder('b')
@@ -83,7 +86,8 @@ export class RecurringBookingsService {
     if (schedule.isCancelled) return null;
     if (this.getScheduleStart(schedule).getTime() <= Date.now()) return null;
 
-    if (!canTakeLevel(recurring.user.level, schedule.pilatesClass.level)) return null;
+    if (!canTakeLevel(recurring.user.level, schedule.pilatesClass.level))
+      return null;
 
     const sessionMonth = schedule.date.substring(0, 7);
     const limit = await this.paymentsService.getMonthClassLimit(
@@ -93,7 +97,10 @@ export class RecurringBookingsService {
     // Recurrentes solo materializan en meses pagados (con pack activo).
     if (limit === 0) return null;
     if (limit !== null && limit > 0) {
-      const monthCount = await this.countMonthBookings(recurring.user.id, sessionMonth);
+      const monthCount = await this.countMonthBookings(
+        recurring.user.id,
+        sessionMonth,
+      );
       if (monthCount >= limit) return null;
     }
 
@@ -143,7 +150,9 @@ export class RecurringBookingsService {
     materializedCount: number;
     skippedCount: number;
   }> {
-    const schedule = await this.schedulesRepo.findOne({ where: { id: scheduleId } });
+    const schedule = await this.schedulesRepo.findOne({
+      where: { id: scheduleId },
+    });
     if (!schedule) throw new NotFoundException('Sesión no encontrada');
 
     if (!canTakeLevel(user.level, schedule.pilatesClass.level)) {
@@ -164,7 +173,9 @@ export class RecurringBookingsService {
       },
     });
     if (existingRec) {
-      throw new ConflictException('Ya tenés una reserva fija para este día y hora');
+      throw new ConflictException(
+        'Ya tenés una reserva fija para este día y hora',
+      );
     }
 
     const recurring = this.recurringRepo.create({
@@ -195,12 +206,19 @@ export class RecurringBookingsService {
     let skipped = 0;
     for (const candidate of candidates) {
       if (this.dayOfWeekFromISO(candidate.date) !== dayOfWeek) continue;
-      const result = await this.tryCreateBookingForRecurring(candidate, savedRec);
+      const result = await this.tryCreateBookingForRecurring(
+        candidate,
+        savedRec,
+      );
       if (result) materialized++;
       else skipped++;
     }
 
-    return { recurring: savedRec, materializedCount: materialized, skippedCount: skipped };
+    return {
+      recurring: savedRec,
+      materializedCount: materialized,
+      skippedCount: skipped,
+    };
   }
 
   /**
@@ -209,7 +227,10 @@ export class RecurringBookingsService {
    * - Si exceden el cap, crea una propuesta pendiente para que la alumnx elija cuáles materializar
    *   (no se crea ningún booking hasta que confirme o se auto-resuelva al vencerse el plazo).
    */
-  async materializeForUserMonth(userId: string, month: string): Promise<number> {
+  async materializeForUserMonth(
+    userId: string,
+    month: string,
+  ): Promise<number> {
     const recurrents = await this.recurringRepo.find({
       where: { user: { id: userId }, isActive: true },
     });
@@ -224,10 +245,15 @@ export class RecurringBookingsService {
 
     // Existentes ya reservadas en el mes (no duplicar)
     const existingCount = await this.countMonthBookings(userId, month);
-    const remainingCap = limit === null ? Infinity : Math.max(0, limit - existingCount);
+    const remainingCap =
+      limit === null ? Infinity : Math.max(0, limit - existingCount);
 
     // Recolectar candidatos elegibles
-    const candidates: Array<{ schedule: Schedule; recurring: RecurringBooking; priority: number }> = [];
+    const candidates: Array<{
+      schedule: Schedule;
+      recurring: RecurringBooking;
+      priority: number;
+    }> = [];
     for (const rec of recurrents) {
       const schedules = await this.schedulesRepo.find({
         where: {
@@ -256,7 +282,11 @@ export class RecurringBookingsService {
         });
         if (dup) continue;
 
-        candidates.push({ schedule: s, recurring: rec, priority: rec.createdAt.getTime() });
+        candidates.push({
+          schedule: s,
+          recurring: rec,
+          priority: rec.createdAt.getTime(),
+        });
       }
     }
 
@@ -266,7 +296,10 @@ export class RecurringBookingsService {
     if (remainingCap === Infinity || candidates.length <= remainingCap) {
       let created = 0;
       for (const c of candidates) {
-        const result = await this.tryCreateBookingForRecurring(c.schedule, c.recurring);
+        const result = await this.tryCreateBookingForRecurring(
+          c.schedule,
+          c.recurring,
+        );
         if (result) created++;
       }
       return created;
@@ -332,7 +365,8 @@ export class RecurringBookingsService {
 
     let cancelledCount = 0;
     for (const booking of futureBookings) {
-      if (this.getScheduleStart(booking.schedule).getTime() <= Date.now()) continue;
+      if (this.getScheduleStart(booking.schedule).getTime() <= Date.now())
+        continue;
 
       const wasConfirmed = booking.status !== BookingStatus.WAITLIST;
       booking.status = BookingStatus.CANCELLED;
@@ -366,7 +400,9 @@ export class RecurringBookingsService {
    * busca recurrentes activas que matcheen y materializa bookings.
    */
   async attachToSchedule(scheduleId: string): Promise<number> {
-    const schedule = await this.schedulesRepo.findOne({ where: { id: scheduleId } });
+    const schedule = await this.schedulesRepo.findOne({
+      where: { id: scheduleId },
+    });
     if (!schedule || schedule.isCancelled) return 0;
 
     const dayOfWeek = this.dayOfWeekFromISO(schedule.date);
@@ -381,7 +417,9 @@ export class RecurringBookingsService {
 
     let created = 0;
     for (const rec of recurrents) {
-      const fresh = await this.schedulesRepo.findOne({ where: { id: schedule.id } });
+      const fresh = await this.schedulesRepo.findOne({
+        where: { id: schedule.id },
+      });
       if (!fresh) continue;
       const result = await this.tryCreateBookingForRecurring(fresh, rec);
       if (result) created++;

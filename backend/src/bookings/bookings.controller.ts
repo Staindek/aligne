@@ -10,7 +10,12 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -45,9 +50,18 @@ export class BookingsController {
   }
 
   @Get('my/class-count')
-  @ApiOperation({ summary: 'Cantidad de clases usadas este mes y límite del pack' })
-  @ApiQuery({ name: 'month', required: false, description: 'YYYY-MM, default: mes actual' })
-  async myClassCount(@CurrentUser() user: User, @Query('month') month?: string) {
+  @ApiOperation({
+    summary: 'Cantidad de clases usadas este mes y límite del pack',
+  })
+  @ApiQuery({
+    name: 'month',
+    required: false,
+    description: 'YYYY-MM, default: mes actual',
+  })
+  async myClassCount(
+    @CurrentUser() user: User,
+    @Query('month') month?: string,
+  ) {
     const [count, limit] = await Promise.all([
       this.bookingsService.getMonthlyClassCountForUser(user.id, month),
       this.paymentsService.getMonthClassLimit(user.id, month),
@@ -62,7 +76,10 @@ export class BookingsController {
   }
 
   @Post('by-schedules')
-  @ApiOperation({ summary: 'Reservas de varias sesiones en batch (devuelve map por scheduleId)' })
+  @ApiOperation({
+    summary:
+      'Reservas de varias sesiones en batch (devuelve map por scheduleId)',
+  })
   bySchedules(@Body() dto: BySchedulesDto) {
     return this.bookingsService.findBySchedules(dto.ids);
   }
@@ -82,7 +99,9 @@ export class BookingsController {
   @Patch(':id/attendance')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @ApiOperation({ summary: 'Marcar asistencia (admin todas, instructora solo las suyas)' })
+  @ApiOperation({
+    summary: 'Marcar asistencia (admin todas, instructora solo las suyas)',
+  })
   markAttendance(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: MarkAttendanceDto,
@@ -95,7 +114,9 @@ export class BookingsController {
   @Get('user/:userId/class-count')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @ApiOperation({ summary: 'Clases usadas por alumna y límite (admin/instructora)' })
+  @ApiOperation({
+    summary: 'Clases usadas por alumna y límite (admin/instructora)',
+  })
   @ApiQuery({ name: 'month', required: false })
   async userClassCount(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -111,7 +132,9 @@ export class BookingsController {
   @Get('user/:userId/no-show-count')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @ApiOperation({ summary: 'Faltas (ausente) de una alumna en el mes (admin/instructora)' })
+  @ApiOperation({
+    summary: 'Faltas (ausente) de una alumna en el mes (admin/instructora)',
+  })
   @ApiQuery({ name: 'month', required: false })
   userNoShowCount(
     @Param('userId', ParseUUIDPipe) userId: string,

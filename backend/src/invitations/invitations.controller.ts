@@ -23,7 +23,10 @@ export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}
 
   @Get('by-token/:token')
-  @ApiOperation({ summary: 'Validar una invitación por token (público, para prefill del registro)' })
+  @ApiOperation({
+    summary:
+      'Validar una invitación por token (público, para prefill del registro)',
+  })
   async byToken(@Param('token') token: string) {
     const invitation = await this.invitationsService.validate(token);
     return {

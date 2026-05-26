@@ -40,10 +40,6 @@ function currentMonthISO(): string {
   return todayISO().slice(0, 7)
 }
 
-function formatHourRange(start: string, end: string): string {
-  return `${start.substring(0, 5)} – ${end.substring(0, 5)}`
-}
-
 export default async function AdminHome() {
   const session = (await getSession())!
   const today = todayISO()

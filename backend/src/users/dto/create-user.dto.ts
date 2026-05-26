@@ -37,7 +37,9 @@ export class CreateUserDto {
   @IsEnum(UserRole, { message: 'El rol debe ser admin, instructor o student' })
   role?: UserRole;
 
-  @ApiPropertyOptional({ description: 'Token de invitación (opcional, fija el rol)' })
+  @ApiPropertyOptional({
+    description: 'Token de invitación (opcional, fija el rol)',
+  })
   @IsOptional()
   @IsString()
   invitationToken?: string;

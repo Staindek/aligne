@@ -19,7 +19,9 @@ export class CreateInstructorDto {
   @IsString({ message: 'El teléfono debe ser texto' })
   phone?: string;
 
-  @ApiPropertyOptional({ example: 'Instructora certificada con 5 años de experiencia' })
+  @ApiPropertyOptional({
+    example: 'Instructora certificada con 5 años de experiencia',
+  })
   @IsOptional()
   @IsString({ message: 'La biografía debe ser texto' })
   bio?: string;

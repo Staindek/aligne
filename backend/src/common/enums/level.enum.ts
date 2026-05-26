@@ -17,7 +17,10 @@ const LEVEL_RANK: Record<ClassLevel, number> = {
  * - La clase es ABIERTO (cualquiera)
  * - Su nivel es >= al nivel de la clase
  */
-export function canTakeLevel(userLevel: ClassLevel, classLevel: ClassLevel): boolean {
+export function canTakeLevel(
+  userLevel: ClassLevel,
+  classLevel: ClassLevel,
+): boolean {
   if (classLevel === ClassLevel.ABIERTO) return true;
   if (userLevel === ClassLevel.ABIERTO) return true;
   return LEVEL_RANK[userLevel] >= LEVEL_RANK[classLevel];

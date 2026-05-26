@@ -21,7 +21,9 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get('my')
-  @ApiOperation({ summary: 'Listar mis notificaciones (más recientes primero)' })
+  @ApiOperation({
+    summary: 'Listar mis notificaciones (más recientes primero)',
+  })
   myNotifications(@CurrentUser() user: User) {
     return this.notificationsService.findMyNotifications(user.id);
   }

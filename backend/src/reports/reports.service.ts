@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus, AttendanceStatus } from '../bookings/entities/booking.entity';
+import {
+  Booking,
+  BookingStatus,
+  AttendanceStatus,
+} from '../bookings/entities/booking.entity';
 import { Schedule } from '../schedules/entities/schedule.entity';
 import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 
@@ -9,7 +13,12 @@ export interface ReportSummary {
   month: string;
   income: { paidCount: number; total: number };
   classes: { scheduled: number; cancelled: number; completed: number };
-  attendance: { present: number; absent: number; pending: number; rate: number };
+  attendance: {
+    present: number;
+    absent: number;
+    pending: number;
+    rate: number;
+  };
   noShows: number;
   topClasses: { name: string; bookings: number }[];
   topTimeslots: { startTime: string; bookings: number }[];
@@ -27,9 +36,12 @@ function monthRange(month: string): { start: string; end: string } {
 @Injectable()
 export class ReportsService {
   constructor(
-    @InjectRepository(Booking) private readonly bookingsRepo: Repository<Booking>,
-    @InjectRepository(Schedule) private readonly schedulesRepo: Repository<Schedule>,
-    @InjectRepository(Payment) private readonly paymentsRepo: Repository<Payment>,
+    @InjectRepository(Booking)
+    private readonly bookingsRepo: Repository<Booking>,
+    @InjectRepository(Schedule)
+    private readonly schedulesRepo: Repository<Schedule>,
+    @InjectRepository(Payment)
+    private readonly paymentsRepo: Repository<Payment>,
   ) {}
 
   async summary(month: string): Promise<ReportSummary> {

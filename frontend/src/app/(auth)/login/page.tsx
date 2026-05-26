@@ -24,7 +24,7 @@ export default function LoginPage() {
 
         <blockquote className="space-y-3">
           <p className="text-primary-foreground/90 text-xl font-normal leading-relaxed">
-            "El movimiento consciente transforma el cuerpo y la mente."
+            &ldquo;El movimiento consciente transforma el cuerpo y la mente.&rdquo;
           </p>
           <footer className="text-primary-foreground/60 text-sm">— Sofi Páez</footer>
         </blockquote>

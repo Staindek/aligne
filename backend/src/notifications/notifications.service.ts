@@ -26,16 +26,18 @@ export class NotificationsService {
     private readonly notificationsRepository: Repository<Notification>,
   ) {}
 
-  async send(payload: EmailPayload): Promise<void> {
-    // En producción: reemplazar con Nodemailer + SMTP / Expo Push para mobile
+  send(payload: EmailPayload): Promise<void> {
+    // En producción: reemplazar con Nodemailer + SMTP / Expo Push para mobile.
+    // Por ahora solo loguea — será realmente async cuando se sume el transporte SMTP.
     this.logger.log(
       `[EMAIL] Para: ${payload.to} | Asunto: ${payload.subject}\n${payload.text}`,
     );
+    return Promise.resolve();
   }
 
   private async persist(args: PersistArgs): Promise<void> {
     const notification = this.notificationsRepository.create({
-      user: { id: args.userId } as { id: string },
+      user: { id: args.userId },
       type: args.type,
       title: args.title,
       body: args.body,
@@ -44,13 +46,27 @@ export class NotificationsService {
     await this.notificationsRepository.save(notification);
   }
 
-  async paymentPending(userId: string, email: string, firstName: string, month: string): Promise<void> {
+  async paymentPending(
+    userId: string,
+    email: string,
+    firstName: string,
+    month: string,
+  ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Pago pendiente para ${monthName} ${year}`;
     const body = `Tu pago de ${monthName} ${year} está pendiente. Completalo para reservar tus clases.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.PAYMENT_PENDING, title, body, link: '/student/payments' }),
+      this.persist({
+        userId,
+        type: NotificationType.PAYMENT_PENDING,
+        title,
+        body,
+        link: '/student/payments',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -59,13 +75,27 @@ export class NotificationsService {
     ]);
   }
 
-  async paymentConfirmed(userId: string, email: string, firstName: string, month: string): Promise<void> {
+  async paymentConfirmed(
+    userId: string,
+    email: string,
+    firstName: string,
+    month: string,
+  ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Pago confirmado para ${monthName} ${year}`;
     const body = `¡Tu pago de ${monthName} ${year} fue confirmado! Ya podés reservar tus 4 clases del mes.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.PAYMENT_CONFIRMED, title, body, link: '/student/classes' }),
+      this.persist({
+        userId,
+        type: NotificationType.PAYMENT_CONFIRMED,
+        title,
+        body,
+        link: '/student/classes',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -84,11 +114,20 @@ export class NotificationsService {
     confirmUrl: string,
     deadline: Date,
   ): Promise<void> {
-    const deadlineStr = deadline.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+    const deadlineStr = deadline.toLocaleString('es-AR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
     const title = `¡Se liberó un lugar en ${className}!`;
     const body = `Se liberó un lugar en la clase de ${className} del ${date} a las ${startTime}. Confirmá antes del ${deadlineStr} o el lugar pasará a la siguiente persona.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.WAITLIST_PROMOTION, title, body, link: '/student/bookings' }),
+      this.persist({
+        userId,
+        type: NotificationType.WAITLIST_PROMOTION,
+        title,
+        body,
+        link: '/student/bookings',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -97,11 +136,22 @@ export class NotificationsService {
     ]);
   }
 
-  async waitlistExpired(userId: string, email: string, firstName: string, className: string): Promise<void> {
+  async waitlistExpired(
+    userId: string,
+    email: string,
+    firstName: string,
+    className: string,
+  ): Promise<void> {
     const title = `El lugar en ${className} pasó a otra alumnx`;
     const body = `El tiempo para confirmar tu lugar en ${className} venció. El lugar pasó a la siguiente persona en lista.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.WAITLIST_EXPIRED, title, body, link: '/student/bookings' }),
+      this.persist({
+        userId,
+        type: NotificationType.WAITLIST_EXPIRED,
+        title,
+        body,
+        link: '/student/bookings',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -122,7 +172,13 @@ export class NotificationsService {
     const title = `Nueva clase: ${className} el ${date}`;
     const body = `Se agendó una nueva clase de ${className} con ${instructorName} el ${date} a las ${startTime}.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.CLASS_CREATED, title, body, link: '/student/classes' }),
+      this.persist({
+        userId,
+        type: NotificationType.CLASS_CREATED,
+        title,
+        body,
+        link: '/student/classes',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -142,7 +198,13 @@ export class NotificationsService {
     const title = `Clase cancelada: ${className} el ${date}`;
     const body = `La clase de ${className} del ${date} a las ${startTime} fue cancelada. Tu reserva fue cancelada automáticamente y la clase no se cuenta dentro de tu plan mensual.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.CLASS_CANCELLED, title, body, link: '/student/bookings' }),
+      this.persist({
+        userId,
+        type: NotificationType.CLASS_CANCELLED,
+        title,
+        body,
+        link: '/student/bookings',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -163,7 +225,13 @@ export class NotificationsService {
     const title = `Se liberó un lugar en ${className}`;
     const body = `Se liberó un lugar en la clase de ${className} del ${date} a las ${startTime}.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.SPOT_OPENED, title, body, link: '/student/classes' }),
+      this.persist({
+        userId,
+        type: NotificationType.SPOT_OPENED,
+        title,
+        body,
+        link: '/student/classes',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -180,11 +248,20 @@ export class NotificationsService {
     month: string,
   ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Tenés ${count} faltas este mes`;
     const body = `Registramos ${count} faltas en clases reservadas durante ${monthName} ${year}. Para no afectar tu plan, cancelá tus reservas con al menos 4 horas de anticipación si no podés asistir.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.NO_SHOW_WARNING, title, body, link: '/student/bookings' }),
+      this.persist({
+        userId,
+        type: NotificationType.NO_SHOW_WARNING,
+        title,
+        body,
+        link: '/student/bookings',
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -193,13 +270,26 @@ export class NotificationsService {
     ]);
   }
 
-  async fifthClassWarning(userId: string, email: string, firstName: string, month: string): Promise<void> {
+  async fifthClassWarning(
+    userId: string,
+    email: string,
+    firstName: string,
+    month: string,
+  ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Límite de clases alcanzado en ${monthName}`;
     const body = `Alcanzaste el límite de 4 clases de tu plan para ${monthName} ${year}.`;
     await Promise.all([
-      this.persist({ userId, type: NotificationType.FIFTH_CLASS_WARNING, title, body }),
+      this.persist({
+        userId,
+        type: NotificationType.FIFTH_CLASS_WARNING,
+        title,
+        body,
+      }),
       this.send({
         to: email,
         subject: `Aligné — ${title}`,
@@ -254,7 +344,10 @@ export class NotificationsService {
     proposalId: string,
   ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Elegí tus fijas de ${monthName}`;
     const body = `Tenés ${candidateCount} clases fijas para ${monthName} ${year} y tu pack permite ${cap}. Entrá a elegir cuáles materializar — si no respondés en 24hs, dejamos las fijas más antiguas.`;
     await Promise.all([
@@ -282,7 +375,10 @@ export class NotificationsService {
     dropped: number,
   ): Promise<void> {
     const [year, m] = month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const title = `Tus fijas de ${monthName} están listas`;
     const body = `Como no respondiste a tiempo, materializamos ${materialized} clases priorizando tus fijas más antiguas. ${dropped > 0 ? `Quedaron ${dropped} afuera del mes.` : ''}`;
     await Promise.all([

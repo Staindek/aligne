@@ -43,7 +43,10 @@ export class SchedulesController {
 
   @Post('bulk')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Agendar varias clases en un rango con días de la semana (solo admin)' })
+  @ApiOperation({
+    summary:
+      'Agendar varias clases en un rango con días de la semana (solo admin)',
+  })
   bulkCreate(@Body() dto: BulkCreateSchedulesDto) {
     return this.schedulesService.bulkCreate(dto);
   }
@@ -51,7 +54,8 @@ export class SchedulesController {
   @Post('generate-month')
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Generar mes desde el mes anterior. Por defecto, próximo mes (solo admin)',
+    summary:
+      'Generar mes desde el mes anterior. Por defecto, próximo mes (solo admin)',
   })
   generateMonth(@Body() dto: GenerateMonthDto) {
     const month = dto.month ?? this.nextMonth();
@@ -81,7 +85,9 @@ export class SchedulesController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @ApiOperation({ summary: 'Actualizar sesión (admin todas, instructor solo las suyas)' })
+  @ApiOperation({
+    summary: 'Actualizar sesión (admin todas, instructor solo las suyas)',
+  })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateScheduleDto,
@@ -92,11 +98,10 @@ export class SchedulesController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @ApiOperation({ summary: 'Cancelar sesión (admin todas, instructor solo las suyas)' })
-  cancel(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
+  @ApiOperation({
+    summary: 'Cancelar sesión (admin todas, instructor solo las suyas)',
+  })
+  cancel(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.schedulesService.cancel(id, user);
   }
 }

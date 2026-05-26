@@ -35,14 +35,22 @@ export class BulkCreateSchedulesDto {
 
   @ApiProperty({ example: '09:00' })
   @IsString()
-  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'La hora debe tener formato HH:MM' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'La hora debe tener formato HH:MM',
+  })
   startTime: string;
 
   @ApiProperty({ example: '2026-05-19' })
-  @IsDateString({}, { message: 'La fecha de inicio debe tener formato AAAA-MM-DD' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de inicio debe tener formato AAAA-MM-DD' },
+  )
   startDate: string;
 
   @ApiProperty({ example: '2026-06-30' })
-  @IsDateString({}, { message: 'La fecha de fin debe tener formato AAAA-MM-DD' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de fin debe tener formato AAAA-MM-DD' },
+  )
   endDate: string;
 }

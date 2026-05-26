@@ -58,17 +58,26 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Iniciar pago / upgrade para un pack' })
   initiate(@CurrentUser() user: User, @Body() dto: InitiatePaymentDto) {
-    return this.paymentsService.initiatePackPayment(user.id, dto.packId, dto.month);
+    return this.paymentsService.initiatePackPayment(
+      user.id,
+      dto.packId,
+      dto.month,
+    );
   }
 
   @Post('change-pack')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
-    summary: 'Cambiar a un pack menor el mes ya pagado (la diferencia va al crédito)',
+    summary:
+      'Cambiar a un pack menor el mes ya pagado (la diferencia va al crédito)',
   })
   changePack(@CurrentUser() user: User, @Body() dto: ChangePackDto) {
-    return this.paymentsService.changePackForPaidMonth(user.id, dto.newPackId, dto.month);
+    return this.paymentsService.changePackForPaidMonth(
+      user.id,
+      dto.newPackId,
+      dto.month,
+    );
   }
 
   @Post('admin/change-pack')
@@ -79,17 +88,20 @@ export class PaymentsController {
     summary: 'Admin cambia pack del mes a otra alumnx (downgrade con crédito)',
   })
   adminChangePack(@Body() dto: AdminChangePackDto) {
-    return this.paymentsService.changePackForPaidMonth(dto.userId, dto.newPackId, dto.month);
+    return this.paymentsService.changePackForPaidMonth(
+      dto.userId,
+      dto.newPackId,
+      dto.month,
+    );
   }
 
   @Post(':id/checkout')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Iniciar checkout Mercado Pago para un pago existente' })
-  checkout(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
+  @ApiOperation({
+    summary: 'Iniciar checkout Mercado Pago para un pago existente',
+  })
+  checkout(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.paymentsService.createCheckout(id, user.id);
   }
 
@@ -97,10 +109,7 @@ export class PaymentsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Verificar estado del pago con MP' })
-  verify(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
+  verify(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.paymentsService.verifyByPreference(id, user.id);
   }
 

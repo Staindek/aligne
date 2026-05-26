@@ -16,7 +16,12 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, RecurringBooking, MaterializationProposal, Schedule]),
+    TypeOrmModule.forFeature([
+      Booking,
+      RecurringBooking,
+      MaterializationProposal,
+      Schedule,
+    ]),
     forwardRef(() => SchedulesModule),
     forwardRef(() => PaymentsModule),
     NotificationsModule,
@@ -26,7 +31,11 @@ import { NotificationsModule } from '../notifications/notifications.module';
     RecurringBookingsController,
     MaterializationProposalsController,
   ],
-  providers: [BookingsService, RecurringBookingsService, MaterializationProposalsService],
+  providers: [
+    BookingsService,
+    RecurringBookingsService,
+    MaterializationProposalsService,
+  ],
   exports: [RecurringBookingsService, MaterializationProposalsService],
 })
 export class BookingsModule {}

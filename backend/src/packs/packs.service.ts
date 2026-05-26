@@ -10,7 +10,11 @@ import { Pack } from './entities/pack.entity';
 import { CreatePackDto } from './dto/create-pack.dto';
 import { UpdatePackDto } from './dto/update-pack.dto';
 
-const DEFAULT_PACKS: { name: string; classCount: number | null; price: number }[] = [
+const DEFAULT_PACKS: {
+  name: string;
+  classCount: number | null;
+  price: number;
+}[] = [
   { name: 'Pack 4 clases', classCount: 4, price: 10000 },
   { name: 'Pack 8 clases', classCount: 8, price: 18000 },
   { name: 'Pack 12 clases', classCount: 12, price: 25000 },

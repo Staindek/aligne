@@ -7,7 +7,9 @@ export class CreateClassDto {
   @IsString({ message: 'El nombre debe ser texto' })
   name: string;
 
-  @ApiPropertyOptional({ example: 'Clase de pilates en máquina Reformer para nivel inicial' })
+  @ApiPropertyOptional({
+    example: 'Clase de pilates en máquina Reformer para nivel inicial',
+  })
   @IsOptional()
   @IsString({ message: 'La descripción debe ser texto' })
   description?: string;

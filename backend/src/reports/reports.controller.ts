@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -16,7 +21,11 @@ export class ReportsController {
 
   @Get('summary')
   @ApiOperation({ summary: 'Resumen del mes para admin' })
-  @ApiQuery({ name: 'month', required: false, description: 'YYYY-MM (default: mes actual)' })
+  @ApiQuery({
+    name: 'month',
+    required: false,
+    description: 'YYYY-MM (default: mes actual)',
+  })
   summary(@Query('month') month?: string) {
     const m = month ?? new Date().toISOString().substring(0, 7);
     return this.reportsService.summary(m);

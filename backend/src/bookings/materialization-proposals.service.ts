@@ -57,9 +57,11 @@ export class MaterializationProposalsService {
       { status: ProposalStatus.CANCELLED, resolvedAt: new Date() },
     );
 
-    const deadline = new Date(Date.now() + PROPOSAL_DEADLINE_HOURS * 3600 * 1000);
+    const deadline = new Date(
+      Date.now() + PROPOSAL_DEADLINE_HOURS * 3600 * 1000,
+    );
     const proposal = this.proposalsRepo.create({
-      user: { id: userId } as { id: string },
+      user: { id: userId },
       month,
       status: ProposalStatus.PENDING,
       cap,
@@ -92,10 +94,14 @@ export class MaterializationProposalsService {
     });
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<MaterializationProposal> {
+  async findByIdForUser(
+    id: string,
+    userId: string,
+  ): Promise<MaterializationProposal> {
     const proposal = await this.proposalsRepo.findOne({ where: { id } });
     if (!proposal) throw new NotFoundException('Propuesta no encontrada');
-    if (proposal.user.id !== userId) throw new ForbiddenException('No autorizado');
+    if (proposal.user.id !== userId)
+      throw new ForbiddenException('No autorizado');
     return proposal;
   }
 
@@ -133,7 +139,9 @@ export class MaterializationProposalsService {
     const candidateIds = new Set(proposal.candidates.map((c) => c.scheduleId));
     for (const sid of selectedScheduleIds) {
       if (!candidateIds.has(sid)) {
-        throw new BadRequestException('Hay clases que ya no son válidas para este mes');
+        throw new BadRequestException(
+          'Hay clases que ya no son válidas para este mes',
+        );
       }
     }
 
@@ -143,7 +151,9 @@ export class MaterializationProposalsService {
 
     // Validar que las clases elegidas no se pisen entre sí ni con reservas previas
     const selectedSchedules = selectedScheduleIds.length
-      ? await this.schedulesRepo.find({ where: { id: In(selectedScheduleIds) } })
+      ? await this.schedulesRepo.find({
+          where: { id: In(selectedScheduleIds) },
+        })
       : [];
     for (let i = 0; i < selectedSchedules.length; i++) {
       for (let j = i + 1; j < selectedSchedules.length; j++) {
@@ -191,7 +201,10 @@ export class MaterializationProposalsService {
   @Cron(CronExpression.EVERY_30_MINUTES)
   async autoResolveExpired(): Promise<void> {
     const expired = await this.proposalsRepo.find({
-      where: { status: ProposalStatus.PENDING, deadlineAt: LessThan(new Date()) },
+      where: {
+        status: ProposalStatus.PENDING,
+        deadlineAt: LessThan(new Date()),
+      },
     });
     if (expired.length === 0) return;
 
@@ -199,10 +212,15 @@ export class MaterializationProposalsService {
 
     for (const proposal of expired) {
       try {
-        const ordered = [...proposal.candidates].sort((a, b) => a.priority - b.priority);
+        const ordered = [...proposal.candidates].sort(
+          (a, b) => a.priority - b.priority,
+        );
         const kept = ordered.slice(0, proposal.cap);
         const dropped = ordered.slice(proposal.cap);
-        const materialized = await this.materializeCandidates(kept, proposal.user.id);
+        const materialized = await this.materializeCandidates(
+          kept,
+          proposal.user.id,
+        );
 
         proposal.status = ProposalStatus.AUTO_RESOLVED;
         proposal.resolvedAt = new Date();
@@ -235,11 +253,15 @@ export class MaterializationProposalsService {
     if (candidates.length === 0) return 0;
 
     const scheduleIds = candidates.map((c) => c.scheduleId);
-    const recurringIds = Array.from(new Set(candidates.map((c) => c.recurringId)));
+    const recurringIds = Array.from(
+      new Set(candidates.map((c) => c.recurringId)),
+    );
 
     const [schedules, recurrings] = await Promise.all([
       this.schedulesRepo.find({ where: { id: In(scheduleIds) } }),
-      this.recurringRepo.find({ where: { id: In(recurringIds), isActive: true } }),
+      this.recurringRepo.find({
+        where: { id: In(recurringIds), isActive: true },
+      }),
     ]);
     const schedulesById = new Map(schedules.map((s) => [s.id, s]));
     const recurringsById = new Map(recurrings.map((r) => [r.id, r]));
@@ -251,7 +273,8 @@ export class MaterializationProposalsService {
       if (!schedule || !recurring) continue;
       if (schedule.isCancelled) continue;
       if (this.getScheduleStart(schedule).getTime() <= Date.now()) continue;
-      if (!canTakeLevel(recurring.user.level, schedule.pilatesClass.level)) continue;
+      if (!canTakeLevel(recurring.user.level, schedule.pilatesClass.level))
+        continue;
       if (schedule.enrolledCount >= schedule.maxCapacity) continue;
 
       const existing = await this.bookingsRepo.findOne({
@@ -277,13 +300,17 @@ export class MaterializationProposalsService {
       if (conflict) continue;
 
       const booking = this.bookingsRepo.create({
-        user: { id: userId } as { id: string },
+        user: { id: userId },
         schedule,
         status: BookingStatus.CONFIRMED,
         recurringBooking: recurring,
       });
       await this.bookingsRepo.save(booking);
-      await this.schedulesRepo.increment({ id: schedule.id }, 'enrolledCount', 1);
+      await this.schedulesRepo.increment(
+        { id: schedule.id },
+        'enrolledCount',
+        1,
+      );
       await this.schedulesRepo.update({ id: schedule.id }, { emptyAt: null });
       created++;
     }

@@ -12,7 +12,7 @@ export async function loginAction(
   const password = formData.get('password') as string
 
   try {
-    const { accessToken, user } = await authApi.login(email, password)
+    const { accessToken } = await authApi.login(email, password)
     const fullUser = await authApi.me(accessToken)
 
     const sessionUser: SessionUser = {

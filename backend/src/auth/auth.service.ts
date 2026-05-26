@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,7 +29,8 @@ export class AuthService {
     const { invitationToken, ...userData } = createUserDto;
 
     if (invitationToken) {
-      const invitation = await this.invitationsService.validate(invitationToken);
+      const invitation =
+        await this.invitationsService.validate(invitationToken);
       if (invitation.email.toLowerCase() !== userData.email.toLowerCase()) {
         throw new BadRequestException('El email no coincide con la invitación');
       }
@@ -58,12 +58,17 @@ export class AuthService {
     return this.buildResponse(user.id, user.email, user.role);
   }
 
-  async forgotPassword(email: string): Promise<{ message: string; resetToken?: string }> {
+  async forgotPassword(
+    email: string,
+  ): Promise<{ message: string; resetToken?: string }> {
     const user = await this.usersService.findByEmail(email);
 
     // Siempre responder igual para no revelar si el email existe
     if (!user) {
-      return { message: 'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña.' };
+      return {
+        message:
+          'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña.',
+      };
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -78,7 +83,8 @@ export class AuthService {
     console.log(`[Aligné] Reset token para ${email}: ${token}`);
 
     return {
-      message: 'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña.',
+      message:
+        'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña.',
       ...(isDev && { resetToken: token }),
     };
   }

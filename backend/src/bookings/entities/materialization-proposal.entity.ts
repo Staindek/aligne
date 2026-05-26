@@ -36,7 +36,11 @@ export class MaterializationProposal {
   @Column({ type: 'varchar', length: 7 })
   month: string;
 
-  @Column({ type: 'enum', enum: ProposalStatus, default: ProposalStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: ProposalStatus,
+    default: ProposalStatus.PENDING,
+  })
   status: ProposalStatus;
 
   @Column({ type: 'int' })

@@ -54,10 +54,7 @@ export class ClassesController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Actualizar tipo de clase (solo admin)' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateClassDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateClassDto) {
     return this.classesService.update(id, dto);
   }
 

@@ -37,7 +37,11 @@ export class Booking {
   @JoinColumn()
   schedule: Schedule;
 
-  @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.CONFIRMED })
+  @Column({
+    type: 'enum',
+    enum: BookingStatus,
+    default: BookingStatus.CONFIRMED,
+  })
   status: BookingStatus;
 
   @Column({ nullable: true })
@@ -46,7 +50,11 @@ export class Booking {
   @Column({ nullable: true })
   confirmationDeadline: Date;
 
-  @Column({ type: 'enum', enum: AttendanceStatus, default: AttendanceStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: AttendanceStatus,
+    default: AttendanceStatus.PENDING,
+  })
   attendanceStatus: AttendanceStatus;
 
   @Column({ type: 'timestamp', nullable: true })

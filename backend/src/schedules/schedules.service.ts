@@ -87,7 +87,11 @@ export class SchedulesService {
 
   private assertCanModify(schedule: Schedule, user: User): void {
     if (user.role === UserRole.ADMIN) return;
-    if (user.role === UserRole.INSTRUCTOR && schedule.instructor.email === user.email) return;
+    if (
+      user.role === UserRole.INSTRUCTOR &&
+      schedule.instructor.email === user.email
+    )
+      return;
     throw new ForbiddenException('No tenés permiso para modificar esta clase');
   }
 
@@ -125,7 +129,9 @@ export class SchedulesService {
     const start = new Date(`${dto.startDate}T00:00:00`);
     const end = new Date(`${dto.endDate}T00:00:00`);
     if (end < start) {
-      throw new BadRequestException('La fecha de fin debe ser posterior a la de inicio');
+      throw new BadRequestException(
+        'La fecha de fin debe ser posterior a la de inicio',
+      );
     }
 
     const [pilatesClass, instructor] = await Promise.all([
@@ -133,7 +139,10 @@ export class SchedulesService {
       this.instructorsService.findOne(dto.instructorId),
     ]);
 
-    const endTime = this.addMinutes(dto.startTime, pilatesClass.durationMinutes);
+    const endTime = this.addMinutes(
+      dto.startTime,
+      pilatesClass.durationMinutes,
+    );
     this.assertEndAfterStart(dto.startTime, endTime);
 
     const daysSet = new Set(dto.daysOfWeek);
@@ -149,7 +158,12 @@ export class SchedulesService {
       const isoDate = cursor.toISOString().substring(0, 10);
 
       try {
-        await this.assertNoInstructorOverlap(instructor.id, isoDate, dto.startTime, endTime);
+        await this.assertNoInstructorOverlap(
+          instructor.id,
+          isoDate,
+          dto.startTime,
+          endTime,
+        );
       } catch (e) {
         skipped.push({
           date: isoDate,
@@ -227,8 +241,14 @@ export class SchedulesService {
     const skipped: { date: string; reason: string }[] = [];
     if (patterns.size === 0) return { created, skipped };
 
-    const classCache = new Map<string, Awaited<ReturnType<typeof this.classesService.findOne>>>();
-    const instructorCache = new Map<string, Awaited<ReturnType<typeof this.instructorsService.findOne>>>();
+    const classCache = new Map<
+      string,
+      Awaited<ReturnType<typeof this.classesService.findOne>>
+    >();
+    const instructorCache = new Map<
+      string,
+      Awaited<ReturnType<typeof this.instructorsService.findOne>>
+    >();
 
     const targetLastDay = new Date(y, m, 0).getDate();
     for (let d = 1; d <= targetLastDay; d++) {
@@ -252,7 +272,12 @@ export class SchedulesService {
         }
 
         try {
-          await this.assertNoInstructorOverlap(p.instructorId, isoDate, p.startTime, p.endTime);
+          await this.assertNoInstructorOverlap(
+            p.instructorId,
+            isoDate,
+            p.startTime,
+            p.endTime,
+          );
         } catch (e) {
           skipped.push({
             date: isoDate,
@@ -262,10 +287,16 @@ export class SchedulesService {
         }
 
         if (!classCache.has(p.classId)) {
-          classCache.set(p.classId, await this.classesService.findOne(p.classId));
+          classCache.set(
+            p.classId,
+            await this.classesService.findOne(p.classId),
+          );
         }
         if (!instructorCache.has(p.instructorId)) {
-          instructorCache.set(p.instructorId, await this.instructorsService.findOne(p.instructorId));
+          instructorCache.set(
+            p.instructorId,
+            await this.instructorsService.findOne(p.instructorId),
+          );
         }
 
         const schedule = this.schedulesRepository.create({
@@ -331,17 +362,25 @@ export class SchedulesService {
     return schedule;
   }
 
-  async update(id: string, dto: UpdateScheduleDto, user: User): Promise<Schedule> {
+  async update(
+    id: string,
+    dto: UpdateScheduleDto,
+    user: User,
+  ): Promise<Schedule> {
     const schedule = await this.findOne(id);
     this.assertCanModify(schedule, user);
 
     if (dto.pilatesClassId) {
-      schedule.pilatesClass = await this.classesService.findOne(dto.pilatesClassId);
+      schedule.pilatesClass = await this.classesService.findOne(
+        dto.pilatesClassId,
+      );
     }
     if (dto.instructorId) {
       if (user.role !== UserRole.ADMIN)
         throw new ForbiddenException('Solo admin puede cambiar la instructora');
-      schedule.instructor = await this.instructorsService.findOne(dto.instructorId);
+      schedule.instructor = await this.instructorsService.findOne(
+        dto.instructorId,
+      );
     }
 
     const { pilatesClassId, instructorId, ...rest } = dto;
@@ -399,7 +438,10 @@ export class SchedulesService {
     const activeBookings = await this.bookingsRepository.find({
       where: [
         { schedule: { id: schedule.id }, status: BookingStatus.CONFIRMED },
-        { schedule: { id: schedule.id }, status: BookingStatus.PENDING_CONFIRMATION },
+        {
+          schedule: { id: schedule.id },
+          status: BookingStatus.PENDING_CONFIRMATION,
+        },
         { schedule: { id: schedule.id }, status: BookingStatus.WAITLIST },
       ],
     });

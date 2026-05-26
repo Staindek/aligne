@@ -48,10 +48,7 @@ export class PacksController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Actualizar pack (solo admin)' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdatePackDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePackDto) {
     return this.packsService.update(id, dto);
   }
 

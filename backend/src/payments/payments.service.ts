@@ -8,9 +8,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import MercadoPagoConfig, { Preference, Payment as MpPayment } from 'mercadopago';
+import MercadoPagoConfig, {
+  Preference,
+  Payment as MpPayment,
+} from 'mercadopago';
 import { Payment, PaymentStatus } from './entities/payment.entity';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { Pack } from '../packs/entities/pack.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -62,7 +65,9 @@ export class PaymentsService {
   private async refundCreditIfNeeded(payment: Payment): Promise<void> {
     const applied = Number(payment.creditApplied ?? 0);
     if (applied <= 0) return;
-    const user = await this.usersRepository.findOne({ where: { id: payment.user.id } });
+    const user = await this.usersRepository.findOne({
+      where: { id: payment.user.id },
+    });
     if (!user) return;
     user.credit = Number(user.credit ?? 0) + applied;
     await this.usersRepository.save(user);
@@ -124,7 +129,10 @@ export class PaymentsService {
     }).pack;
   }
 
-  async getMonthSummary(userId: string, month?: string): Promise<MonthPaymentSummary> {
+  async getMonthSummary(
+    userId: string,
+    month?: string,
+  ): Promise<MonthPaymentSummary> {
     const m = month ?? this.currentMonth();
     const [user, payments] = await Promise.all([
       this.usersRepository.findOne({ where: { id: userId } }),
@@ -140,9 +148,7 @@ export class PaymentsService {
     return {
       month: m,
       effectivePack,
-      classLimit: effectivePack
-        ? (effectivePack.classCount ?? null)
-        : 0,
+      classLimit: effectivePack ? (effectivePack.classCount ?? null) : 0,
       totalPaid,
       userCredit: Number(user?.credit ?? 0),
       userClassCredit: Number(user?.classCredit ?? 0),
@@ -155,7 +161,10 @@ export class PaymentsService {
   // - número > 0  → tope de clases
   // - null        → ilimitado (Pase libre)
   // - 0           → sin pack pago (no puede reservar)
-  async getMonthClassLimit(userId: string, month?: string): Promise<number | null> {
+  async getMonthClassLimit(
+    userId: string,
+    month?: string,
+  ): Promise<number | null> {
     const summary = await this.getMonthSummary(userId, month);
     return summary.classLimit;
   }
@@ -306,13 +315,17 @@ export class PaymentsService {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
-    const newPack = await this.packsRepository.findOne({ where: { id: newPackId } });
+    const newPack = await this.packsRepository.findOne({
+      where: { id: newPackId },
+    });
     if (!newPack || !newPack.isActive)
       throw new NotFoundException('Pack no encontrado o inactivo');
 
     const summary = await this.getMonthSummary(userId, month);
     if (!summary.effectivePack) {
-      throw new BadRequestException('No hay pack pago en este mes para cambiar');
+      throw new BadRequestException(
+        'No hay pack pago en este mes para cambiar',
+      );
     }
 
     const oldPack = summary.effectivePack;
@@ -400,11 +413,17 @@ export class PaymentsService {
   async adminCreate(dto: CreatePaymentDto): Promise<Payment> {
     // Admin registra pagos manualmente; el deadline del día 10 solo aplica al alumnx
     if (dto.month < this.currentMonth()) {
-      throw new BadRequestException('No se puede registrar un pago para un mes pasado');
+      throw new BadRequestException(
+        'No se puede registrar un pago para un mes pasado',
+      );
     }
-    const user = await this.usersRepository.findOne({ where: { id: dto.userId } });
+    const user = await this.usersRepository.findOne({
+      where: { id: dto.userId },
+    });
     if (!user) throw new NotFoundException('Usuario no encontrado');
-    const pack = await this.packsRepository.findOne({ where: { id: dto.packId } });
+    const pack = await this.packsRepository.findOne({
+      where: { id: dto.packId },
+    });
     if (!pack) throw new NotFoundException('Pack no encontrado');
     const payment = this.paymentsRepository.create({
       user,
@@ -430,12 +449,18 @@ export class PaymentsService {
       saved.month,
     );
     if (!wasPaid) {
-      void this.recurringBookings.materializeForUserMonth(saved.user.id, saved.month);
+      void this.recurringBookings.materializeForUserMonth(
+        saved.user.id,
+        saved.month,
+      );
     }
     return saved;
   }
 
-  async createCheckout(paymentId: string, userId: string): Promise<{ checkoutUrl: string }> {
+  async createCheckout(
+    paymentId: string,
+    userId: string,
+  ): Promise<{ checkoutUrl: string }> {
     const payment = await this.paymentsRepository.findOne({
       where: { id: paymentId, user: { id: userId } },
     });
@@ -452,10 +477,15 @@ export class PaymentsService {
       );
     }
 
-    const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
-    const apiUrl = this.config.get<string>('API_URL') ?? 'http://localhost:3000';
+    const appUrl =
+      this.config.get<string>('APP_URL') ?? 'http://localhost:3001';
+    const apiUrl =
+      this.config.get<string>('API_URL') ?? 'http://localhost:3000';
     const [year, m] = payment.month.split('-');
-    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString('es-AR', { month: 'long' });
+    const monthName = new Date(Number(year), Number(m) - 1).toLocaleString(
+      'es-AR',
+      { month: 'long' },
+    );
     const price = Number(payment.amount ?? payment.pack.price);
 
     try {
@@ -501,7 +531,7 @@ export class PaymentsService {
     try {
       const mpPayment = new MpPayment(this.mpClient);
       const mpData = await mpPayment.get({ id: dataId });
-      const externalRef = mpData.external_reference as string | undefined;
+      const externalRef = mpData.external_reference;
       if (!externalRef) return;
       const payment = await this.paymentsRepository.findOne({
         where: { id: externalRef },
@@ -520,7 +550,10 @@ export class PaymentsService {
           payment.month,
         );
         if (!wasPaid) {
-          void this.recurringBookings.materializeForUserMonth(payment.user.id, payment.month);
+          void this.recurringBookings.materializeForUserMonth(
+            payment.user.id,
+            payment.month,
+          );
         }
       } else if (mpData.status === 'rejected') {
         payment.status = PaymentStatus.FAILED;
@@ -534,15 +567,21 @@ export class PaymentsService {
     }
   }
 
-  async verifyByPreference(paymentId: string, userId: string): Promise<Payment> {
+  async verifyByPreference(
+    paymentId: string,
+    userId: string,
+  ): Promise<Payment> {
     const payment = await this.paymentsRepository.findOne({
       where: { id: paymentId, user: { id: userId } },
     });
     if (!payment) throw new NotFoundException('Pago no encontrado');
-    if (!payment.mpPreferenceId || payment.status === PaymentStatus.PAID) return payment;
+    if (!payment.mpPreferenceId || payment.status === PaymentStatus.PAID)
+      return payment;
     try {
       const preference = new Preference(this.mpClient);
-      const result = await preference.get({ preferenceId: payment.mpPreferenceId });
+      const result = await preference.get({
+        preferenceId: payment.mpPreferenceId,
+      });
       if (payment.mpPaymentId) {
         const mpPayment = new MpPayment(this.mpClient);
         const mpData = await mpPayment.get({ id: payment.mpPaymentId });
@@ -559,7 +598,10 @@ export class PaymentsService {
             payment.user.firstName,
             payment.month,
           );
-          void this.recurringBookings.materializeForUserMonth(payment.user.id, payment.month);
+          void this.recurringBookings.materializeForUserMonth(
+            payment.user.id,
+            payment.month,
+          );
         }
       }
       void result;
@@ -580,7 +622,8 @@ export class PaymentsService {
     });
     const map = new Map<string, User>();
     for (const p of payments) {
-      if (p.user && p.user.role === 'student') map.set(p.user.id, p.user);
+      if (p.user && p.user.role === UserRole.STUDENT)
+        map.set(p.user.id, p.user);
     }
     return Array.from(map.values());
   }

@@ -31,7 +31,10 @@ export class ClassesService {
       return this.classesRepository.save(existing);
     }
 
-    const pilatesClass = this.classesRepository.create({ ...dto, displayOrder: nextOrder });
+    const pilatesClass = this.classesRepository.create({
+      ...dto,
+      displayOrder: nextOrder,
+    });
     return this.classesRepository.save(pilatesClass);
   }
 
@@ -60,7 +63,9 @@ export class ClassesService {
   }
 
   async findOne(id: string): Promise<PilatesClass> {
-    const pilatesClass = await this.classesRepository.findOne({ where: { id } });
+    const pilatesClass = await this.classesRepository.findOne({
+      where: { id },
+    });
     if (!pilatesClass) throw new NotFoundException(`Clase ${id} no encontrada`);
     return pilatesClass;
   }

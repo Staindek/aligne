@@ -2,6 +2,8 @@
   <a href="./README.md">🇬🇧 English</a> · <b>🇪🇸 Español</b>
 </p>
 
+[![CI](https://github.com/Staindek/aligne/actions/workflows/ci.yml/badge.svg)](https://github.com/Staindek/aligne/actions/workflows/ci.yml)
+
 # Aligné — Reservas para Estudio de Pilates
 
 Plataforma de reservas para un estudio boutique de Pilates. Las alumnas reservan clases contra un pack activo, los instructores gestionan asistencia, y los administradores manejan la grilla. Construida end-to-end por una sola persona.
@@ -74,8 +76,8 @@ npm run dev
 Construido como pieza de portfolio DevOps además de ser un producto real. Cada fase es desplegable de forma independiente.
 
 - [x] **Fase 0** — Repo público, `.gitignore`, README, protección de branch
-- [ ] **Fase 1** — Dockerfile (multi-stage) + `docker compose` completo (app + DB)
-- [ ] **Fase 2** — CI en PRs (lint + test + build), checks obligatorios antes de mergear a `main`
+- [x] **Fase 1** — Dockerfile (multi-stage) + `docker compose` completo (app + DB)
+- [x] **Fase 2** — CI en PRs (lint + test + build), checks obligatorios antes de mergear a `main`
 - [ ] **Fase 3** — IaC con Terraform (ECR, RDS, ECS Fargate, ALB, secrets), estado remoto en S3 + lock en DynamoDB
 - [ ] **Fase 4** — Deploy en AWS (ECS Fargate, HTTPS via ACM + CloudFront/Route 53)
 - [ ] **Fase 5** — Observabilidad (dashboards CloudWatch + Grafana, alertas)
